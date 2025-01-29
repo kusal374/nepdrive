@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - NepDrive</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .dashboard {
+            min-height: 100vh;
+            background-color: var(--gray-light);
+        }
+
+        .dashboard-header {
+            background-color: var(--primary-dark);
+            color: var(--white);
+            padding: 1rem 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .dashboard-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .admin-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .admin-info i {
+            font-size: 1.5rem;
+        }
+
+        .dashboard-content {
+            padding: 2rem 0;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--white);
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: var(--white);
+        }
+
+        .stat-info h3 {
+            font-size: 1.5rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-info p {
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+
+        .users-icon { background-color: #4CAF50; }
+        .drivers-icon { background-color: #2196F3; }
+        .rides-icon { background-color: #FF9800; }
+        .earnings-icon { background-color: #9C27B0; }
+
+        .tab-container {
+            background: var(--white);
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 1rem;
+            border-bottom: 2px solid var(--gray-light);
+            margin-bottom: 1.5rem;
+        }
+
+        .tab {
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            font-weight: 500;
+            color: var(--gray);
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+        }
+
+        .tab.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--gray-light);
+        }
+
+        .data-table th {
+            font-weight: 500;
+            color: var(--primary-color);
+            background-color: var(--gray-light);
+        }
+
+        .data-table tr:hover {
+            background-color: var(--gray-light);
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .status-active {
+            background-color: #E8F5E9;
+            color: #2E7D32;
+        }
+
+        .status-pending {
+            background-color: #FFF3E0;
+            color: #E65100;
+        }
+
+        .status-blocked {
+            background-color: #FFEBEE;
+            color: #C62828;
+        }
+
+        .action-btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .btn-approve {
+            background-color: #E8F5E9;
+            color: #2E7D32;
+        }
+
+        .btn-block {
+            background-color: #FFEBEE;
+            color: #C62828;
+        }
+
+        .btn-view {
+            background-color: #E3F2FD;
+            color: #1565C0;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background-color: var(--white);
+            border-radius: 10px;
+            padding: 2rem;
+            width: 90%;
+            max-width: 600px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-close {
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--gray);
+        }
+
+        .profile-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .profile-photo {
+            width: 150px;
+            height: 150px;
+            border-radius: 10px;
+            object-fit: cover;
+        }
+
+        .search-box {
+            margin-bottom: 1.5rem;
+            display: flex;
+            gap: 1rem;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 0.75rem;
+            border: 1px solid var(--gray-light);
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .tabs {
+                flex-wrap: wrap;
+            }
+
+            .data-table {
+                display: block;
+                overflow-x: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <header class="dashboard-header">
+            <div class="container">
+                <nav class="dashboard-nav">
+                    <div class="admin-info">
+                        <i class="fas fa-user-shield"></i>
+                        <div>
+                            <h2>Admin Dashboard</h2>
+                            <span>Manage your NepDrive system</span>
+                        </div>
+                    </div>
+                    <button id="logoutBtn" class="btn btn-outline">Logout</button>
+                </nav>
+            </div>
+        </header>
+
+        <main class="dashboard-content">
+            <div class="container">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon users-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="totalUsers">0</h3>
+                            <p>Total Users</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon drivers-icon">
+                            <i class="fas fa-car"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="totalDrivers">0</h3>
+                            <p>Total Drivers</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon rides-icon">
+                            <i class="fas fa-route"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="totalRides">0</h3>
+                            <p>Total Rides</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon earnings-icon">
+                            <i class="fas fa-money-bill-wave"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="totalEarnings">Rs. 0</h3>
+                            <p>Total Earnings</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-container">
+                    <div class="tabs">
+                        <div class="tab active" data-tab="users">Users</div>
+                        <div class="tab" data-tab="drivers">Drivers</div>
+                        <div class="tab" data-tab="rides">Rides</div>
+                    </div>
+
+                    <!-- Users Tab -->
+                    <div class="tab-content active" id="usersTab">
+                        <div class="search-box">
+                            <input type="text" id="userSearch" class="search-input" placeholder="Search users by name or email...">
+                        </div>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Phone</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersList">
+                                <!-- Users will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Drivers Tab -->
+                    <div class="tab-content" id="driversTab">
+                        <div class="search-box">
+                            <input type="text" id="driverSearch" class="search-input" placeholder="Search drivers by name or email...">
+                        </div>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Vehicle</th>
+                                    <th>License</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="driversList">
+                                <!-- Drivers will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Rides Tab -->
+                    <div class="tab-content" id="ridesTab">
+                        <div class="search-box">
+                            <input type="text" id="rideSearch" class="search-input" placeholder="Search rides...">
+                        </div>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>User</th>
+                                    <th>Driver</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ridesList">
+                                <!-- Rides will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Profile Modal -->
+    <div id="profileModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Profile Details</h2>
+                <span class="modal-close">&times;</span>
+            </div>
+            <div id="profileContent">
+                <!-- Profile details will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="../assets/js/main.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check authentication
+            const session = NepDrive.SessionManager.getSession();
+            if (!session || session.userType !== 'admin') {
+                window.location.href = 'admin-login.html';
+                return;
+            }
+
+            // Tab switching
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // Remove active class from all tabs and contents
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+                    // Add active class to clicked tab and corresponding content
+                    this.classList.add('active');
+                    document.getElementById(this.dataset.tab + 'Tab').classList.add('active');
+
+                    // Load data for the active tab
+                    loadTabData(this.dataset.tab);
+                });
+            });
+
+            // Logout handler
+            document.getElementById('logoutBtn').addEventListener('click', function() {
+                NepDrive.AuthManager.logout();
+                window.location.href = 'admin-login.html';
+            });
+
+            // Modal handling
+            const modal = document.getElementById('profileModal');
+            const modalClose = document.querySelector('.modal-close');
+
+            modalClose.addEventListener('click', function() {
+                modal.style.display = 'none';
+            });
+
+            window.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    modal.style.display = 'none';
+                }
+            });
+
+            // Search handlers
+            document.getElementById('userSearch').addEventListener('input', function(e) {
+                const searchTerm = e.target.value.toLowerCase();
+                filterTable('usersList', searchTerm);
+            });
+
+            document.getElementById('driverSearch').addEventListener('input', function(e) {
+                const searchTerm = e.target.value.toLowerCase();
+                filterTable('driversList', searchTerm);
+            });
+
+            document.getElementById('rideSearch').addEventListener('input', function(e) {
+                const searchTerm = e.target.value.toLowerCase();
+                filterTable('ridesList', searchTerm);
+            });
+
+            function filterTable(tableId, searchTerm) {
+                const rows = document.getElementById(tableId).getElementsByTagName('tr');
+                Array.from(rows).forEach(row => {
+                    const text = row.textContent.toLowerCase();
+                    row.style.display = text.includes(searchTerm) ? '' : 'none';
+                });
+            }
+
+            // Load data functions
+            function loadTabData(tab) {
+                switch(tab) {
+                    case 'users':
+                        loadUsers();
+                        break;
+                    case 'drivers':
+                        loadDrivers();
+                        break;
+                    case 'rides':
+                        loadRides();
+                        break;
+                }
+            }
+
+            function loadUsers() {
+                const users = NepDrive.StorageManager.getItem('users') || [];
+                const usersList = document.getElementById('usersList');
+                
+                usersList.innerHTML = users.map(user => `
+                    <tr>
+                        <td>${user.name}</td>
+                        <td>${user.email}</td>
+                        <td>${user.phone}</td>
+                        <td>
+                            <span class="status-badge status-${user.status}">${user.status}</span>
+                        </td>
+                        <td>
+                            <button class="action-btn btn-view" onclick="viewProfile('user', '${user.id}')">
+                                View
+                            </button>
+                            <button class="action-btn ${user.status === 'blocked' ? 'btn-approve' : 'btn-block'}"
+                                    onclick="toggleUserStatus('${user.id}')">
+                                ${user.status === 'blocked' ? 'Unblock' : 'Block'}
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+
+            function loadDrivers() {
+                const drivers = NepDrive.StorageManager.getItem('drivers') || [];
+                const driversList = document.getElementById('driversList');
+                
+                driversList.innerHTML = drivers.map(driver => `
+                    <tr>
+                        <td>${driver.name}</td>
+                        <td>${driver.vehicleType} - ${driver.vehicleNumber}</td>
+                        <td>${driver.licenseNumber}</td>
+                        <td>
+                            <span class="status-badge status-${driver.status}">${driver.status}</span>
+                        </td>
+                        <td>
+                            <button class="action-btn btn-view" onclick="viewProfile('driver', '${driver.id}')">
+                                View
+                            </button>
+                            ${driver.status === 'pending' ? `
+                                <button class="action-btn btn-approve" onclick="approveDriver('${driver.id}')">
+                                    Approve
+                                </button>
+                            ` : `
+                                <button class="action-btn ${driver.status === 'blocked' ? 'btn-approve' : 'btn-block'}"
+                                        onclick="toggleDriverStatus('${driver.id}')">
+                                    ${driver.status === 'blocked' ? 'Unblock' : 'Block'}
+                                </button>
+                            `}
+                        </td>
+                    </tr>
+                `).join('');
+            }
+
+            function loadRides() {
+                const rides = NepDrive.StorageManager.getItem('rides') || [];
+                const users = NepDrive.StorageManager.getItem('users') || [];
+                const drivers = NepDrive.StorageManager.getItem('drivers') || [];
+                const ridesList = document.getElementById('ridesList');
+                
+                ridesList.innerHTML = rides.map(ride => {
+                    const user = users.find(u => u.id === ride.userId);
+                    const driver = drivers.find(d => d.id === ride.driverId);
+                    return `
+                        <tr>
+                            <td>${new Date(ride.createdAt).toLocaleString()}</td>
+                            <td>${user ? user.name : 'Unknown User'}</td>
+                            <td>${driver ? driver.name : 'Unknown Driver'}</td>
+                            <td>
+                                <span class="status-badge status-${ride.status}">${ride.status}</span>
+                            </td>
+                            <td>
+                                <button class="action-btn btn-view" onclick="viewRideDetails('${ride.id}')">
+                                    View Details
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
+            // Action handlers
+            window.viewProfile = function(type, id) {
+                const items = NepDrive.StorageManager.getItem(type === 'user' ? 'users' : 'drivers') || [];
+                const item = items.find(i => i.id === id);
+                
+                if (!item) return;
+
+                const profileContent = document.getElementById('profileContent');
+                profileContent.innerHTML = `
+                    <div class="profile-grid">
+                        <div>
+                            <img src="${item.profilePhoto || '../assets/images/default-avatar.png'}" 
+                                 alt="Profile Photo"
+                                 class="profile-photo">
+                        </div>
+                        <div>
+                            <h3>${item.name}</h3>
+                            <p>Email: ${item.email}</p>
+                            <p>Phone: ${item.phone}</p>
+                            <p>Status: <span class="status-badge status-${item.status}">${item.status}</span></p>
+                            ${type === 'driver' ? `
+                                <p>License: ${item.licenseNumber}</p>
+                                <p>Vehicle: ${item.vehicleType} - ${item.vehicleNumber}</p>
+                                <p>Vehicle Model: ${item.vehicleModel} (${item.vehicleYear})</p>
+                                <div style="margin-top: 1rem;">
+                                    <h4>Vehicle Photos:</h4>
+                                    <div style="display: flex; gap: 1rem; margin-top: 0.5rem;">
+                                        ${item.vehiclePhotos?.front ? `
+                                            <img src="${item.vehiclePhotos.front}" 
+                                                 alt="Vehicle Front"
+                                                 style="width: 150px; height: 100px; object-fit: cover; border-radius: 5px;">
+                                        ` : ''}
+                                        ${item.vehiclePhotos?.side ? `
+                                            <img src="${item.vehiclePhotos.side}" 
+                                                 alt="Vehicle Side"
+                                                 style="width: 150px; height: 100px; object-fit: cover; border-radius: 5px;">
+                                        ` : ''}
+                                    </div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+
+                document.getElementById('profileModal').style.display = 'block';
+            };
+
+            window.toggleUserStatus = function(userId) {
+                const users = NepDrive.StorageManager.getItem('users') || [];
+                const userIndex = users.findIndex(u => u.id === userId);
+                
+                if (userIndex === -1) return;
+
+                users[userIndex].status = users[userIndex].status === 'blocked' ? 'active' : 'blocked';
+                NepDrive.StorageManager.setItem('users', users);
+                loadUsers();
+            };
+
+            window.toggleDriverStatus = function(driverId) {
+                const drivers = NepDrive.StorageManager.getItem('drivers') || [];
+                const driverIndex = drivers.findIndex(d => d.id === driverId);
+                
+                if (driverIndex === -1) return;
+
+                drivers[driverIndex].status = drivers[driverIndex].status === 'blocked' ? 'active' : 'blocked';
+                NepDrive.StorageManager.setItem('drivers', drivers);
+                loadDrivers();
+            };
+
+            window.approveDriver = function(driverId) {
+                const drivers = NepDrive.StorageManager.getItem('drivers') || [];
+                const driverIndex = drivers.findIndex(d => d.id === driverId);
+                
+                if (driverIndex === -1) return;
+
+                drivers[driverIndex].status = 'active';
+                NepDrive.StorageManager.setItem('drivers', drivers);
+                loadDrivers();
+            };
+
+            window.viewRideDetails = function(rideId) {
+                const rides = NepDrive.StorageManager.getItem('rides') || [];
+                const users = NepDrive.StorageManager.getItem('users') || [];
+                const drivers = NepDrive.StorageManager.getItem('drivers') || [];
+                
+                const ride = rides.find(r => r.id === rideId);
+                if (!ride) return;
+
+                const user = users.find(u => u.id === ride.userId);
+                const driver = drivers.find(d => d.id === ride.driverId);
+
+                const profileContent = document.getElementById('profileContent');
+                profileContent.innerHTML = `
+                    <div class="profile-grid">
+                        <div>
+                            <h3>Ride Details</h3>
+                            <p>Date: ${new Date(ride.createdAt).toLocaleString()}</p>
+                            <p>Status: <span class="status-badge status-${ride.status}">${ride.status}</span></p>
+                            ${ride.tracking ? `
+                                <p>Start Time: ${new Date(ride.tracking.startLocation.timestamp).toLocaleString()}</p>
+                                ${ride.tracking.endLocation ? `
+                                    <p>End Time: ${new Date(ride.tracking.endLocation.timestamp).toLocaleString()}</p>
+                                ` : ''}
+                            ` : ''}
+                        </div>
+                        <div>
+                            <h3>User Details</h3>
+                            <p>Name: ${user?.name || 'Unknown'}</p>
+                            <p>Phone: ${user?.phone || 'N/A'}</p>
+                        </div>
+                        <div>
+                            <h3>Driver Details</h3>
+                            <p>Name: ${driver?.name || 'Unknown'}</p>
+                            <p>Vehicle: ${driver?.vehicleType} - ${driver?.vehicleNumber || 'N/A'}</p>
+                            <p>Phone: ${driver?.phone || 'N/A'}</p>
+                        </div>
+                    </div>
+                `;
+
+                document.getElementById('profileModal').style.display = 'block';
+            };
+
+            // Update statistics
+            function updateStats() {
+                const users = NepDrive.StorageManager.getItem('users') || [];
+                const drivers = NepDrive.StorageManager.getItem('drivers') || [];
+                const rides = NepDrive.StorageManager.getItem('rides') || [];
+
+                document.getElementById('totalUsers').textContent = users.length;
+                document.getElementById('totalDrivers').textContent = drivers.length;
+                document.getElementById('totalRides').textContent = rides.length;
+
+                // Calculate total earnings (dummy calculation)
+                const completedRides = rides.filter(ride => ride.status === 'completed');
+                const totalEarnings = completedRides.length * 500; // Rs. 500 per ride
+                document.getElementById('totalEarnings').textContent = `Rs. ${totalEarnings}`;
+            }
+
+            // Initial load
+            loadUsers();
+            updateStats();
+
+            // Periodic updates
+            setInterval(() => {
+                const activeTab = document.querySelector('.tab.active').dataset.tab;
+                loadTabData(activeTab);
+                updateStats();
+            }, 30000);
+        });
+    </script>
+</body>
+</html> 

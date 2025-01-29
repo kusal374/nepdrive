@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Driver Dashboard - NepDrive</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .dashboard {
+            min-height: 100vh;
+            background-color: var(--gray-light);
+        }
+
+        .dashboard-header {
+            background-color: var(--primary-color);
+            color: var(--white);
+            padding: 1rem 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .dashboard-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .driver-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .driver-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .dashboard-content {
+            padding: 2rem 0;
+        }
+
+        .status-toggle {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: var(--white);
+            padding: 1rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .toggle-slider {
+            background-color: #00C851;
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
+
+        .status-text {
+            font-weight: 500;
+        }
+
+        .status-text.online {
+            color: #00C851;
+        }
+
+        .status-text.offline {
+            color: var(--gray);
+        }
+
+        .ride-requests {
+            margin-top: 2rem;
+        }
+
+        .request-card {
+            background: var(--white);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .request-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .passenger-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .passenger-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .request-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .request-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--gray-light);
+        }
+
+        .detail-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .detail-item i {
+            color: var(--primary-color);
+        }
+
+        .earnings-section {
+            background: var(--white);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .earnings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .earnings-card {
+            background: var(--primary-light);
+            color: var(--white);
+            padding: 1.5rem;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .earnings-amount {
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 0.5rem 0;
+        }
+
+        .no-requests {
+            text-align: center;
+            padding: 2rem;
+            background: var(--white);
+            border-radius: 10px;
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .request-header {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .request-actions {
+                width: 100%;
+                justify-content: space-between;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <header class="dashboard-header">
+            <div class="container">
+                <nav class="dashboard-nav">
+                    <div class="driver-info">
+                        <img id="driverAvatar" src="../assets/images/default-avatar.png" alt="Driver Avatar" class="driver-avatar">
+                        <div>
+                            <h2 id="driverName">Loading...</h2>
+                            <span id="driverEmail">Loading...</span>
+                        </div>
+                    </div>
+                    <button id="logoutBtn" class="btn btn-outline">Logout</button>
+                </nav>
+            </div>
+        </header>
+
+        <main class="dashboard-content">
+            <div class="container">
+                <div class="status-toggle">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="availabilityToggle">
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <span id="statusText" class="status-text offline">You are currently offline</span>
+                </div>
+
+                <section class="earnings-section">
+                    <h2>Earnings Overview</h2>
+                    <div class="earnings-grid">
+                        <div class="earnings-card">
+                            <h3>Today's Earnings</h3>
+                            <div class="earnings-amount" id="todayEarnings">Rs. 0</div>
+                            <p>From <span id="todayRides">0</span> rides</p>
+                        </div>
+                        <div class="earnings-card">
+                            <h3>This Week</h3>
+                            <div class="earnings-amount" id="weekEarnings">Rs. 0</div>
+                            <p>From <span id="weekRides">0</span> rides</p>
+                        </div>
+                        <div class="earnings-card">
+                            <h3>Total Earnings</h3>
+                            <div class="earnings-amount" id="totalEarnings">Rs. 0</div>
+                            <p>From <span id="totalRides">0</span> rides</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="ride-requests">
+                    <h2>Ride Requests</h2>
+                    <div id="requestsList">
+                        <!-- Ride requests will be populated here -->
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <script src="../assets/js/main.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/maps.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Check authentication
+            const session = NepDrive.SessionManager.getSession();
+            if (!session || session.userType !== 'driver') {
+                window.location.href = 'driver-login.html';
+                return;
+            }
+
+            // Load driver data
+            const driver = NepDrive.AuthManager.getCurrentUser();
+            if (driver) {
+                document.getElementById('driverName').textContent = driver.name;
+                document.getElementById('driverEmail').textContent = driver.email;
+                if (driver.profilePhoto) {
+                    document.getElementById('driverAvatar').src = driver.profilePhoto;
+                }
+
+                // Set initial availability state
+                document.getElementById('availabilityToggle').checked = driver.isAvailable;
+                updateStatusText(driver.isAvailable);
+            }
+
+            // Logout handler
+            document.getElementById('logoutBtn').addEventListener('click', function() {
+                NepDrive.AuthManager.logout();
+                window.location.href = 'driver-login.html';
+            });
+
+            // Availability toggle handler
+            const availabilityToggle = document.getElementById('availabilityToggle');
+            availabilityToggle.addEventListener('change', async function() {
+                try {
+                    const isAvailable = this.checked;
+                    
+                    if (isAvailable) {
+                        // Start location tracking
+                        await NepDrive.MapsManager.updateDriverLocation();
+                        
+                        // Update driver availability
+                        const drivers = NepDrive.StorageManager.getItem('drivers') || [];
+                        const driverIndex = drivers.findIndex(d => d.id === driver.id);
+                        if (driverIndex !== -1) {
+                            drivers[driverIndex].isAvailable = true;
+                            NepDrive.StorageManager.setItem('drivers', drivers);
+                        }
+
+                        // Start periodic location updates
+                        startLocationUpdates();
+                    } else {
+                        // Stop location tracking
+                        stopLocationUpdates();
+
+                        // Update driver availability
+                        const drivers = NepDrive.StorageManager.getItem('drivers') || [];
+                        const driverIndex = drivers.findIndex(d => d.id === driver.id);
+                        if (driverIndex !== -1) {
+                            drivers[driverIndex].isAvailable = false;
+                            NepDrive.StorageManager.setItem('drivers', drivers);
+                        }
+                    }
+
+                    updateStatusText(isAvailable);
+                } catch (error) {
+                    NepDrive.NotificationSystem.show(error.message, 'error');
+                    this.checked = !this.checked;
+                }
+            });
+
+            let locationUpdateInterval;
+
+            function startLocationUpdates() {
+                // Update location every 30 seconds
+                locationUpdateInterval = setInterval(async () => {
+                    try {
+                        await NepDrive.MapsManager.updateDriverLocation();
+                    } catch (error) {
+                        console.error('Error updating location:', error);
+                    }
+                }, 30000);
+            }
+
+            function stopLocationUpdates() {
+                if (locationUpdateInterval) {
+                    clearInterval(locationUpdateInterval);
+                }
+            }
+
+            function updateStatusText(isAvailable) {
+                const statusText = document.getElementById('statusText');
+                statusText.textContent = isAvailable ? 'You are online and accepting rides' : 'You are currently offline';
+                statusText.className = `status-text ${isAvailable ? 'online' : 'offline'}`;
+            }
+
+            // Load and display ride requests
+            function loadRideRequests() {
+                const rides = NepDrive.StorageManager.getItem('rides') || [];
+                const users = NepDrive.StorageManager.getItem('users') || [];
+                
+                const driverRides = rides.filter(ride => 
+                    ride.driverId === driver.id && 
+                    ['pending', 'accepted'].includes(ride.status)
+                );
+
+                const requestsList = document.getElementById('requestsList');
+                
+                if (driverRides.length === 0) {
+                    requestsList.innerHTML = `
+                        <div class="no-requests">
+                            <i class="fas fa-car-side" style="font-size: 3rem; color: var(--gray); margin-bottom: 1rem;"></i>
+                            <p>No active ride requests</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                requestsList.innerHTML = driverRides.map(ride => {
+                    const user = users.find(u => u.id === ride.userId);
+                    return `
+                        <div class="request-card">
+                            <div class="request-header">
+                                <div class="passenger-info">
+                                    <img src="${user?.profilePhoto || '../assets/images/default-avatar.png'}" 
+                                         alt="Passenger" 
+                                         class="passenger-avatar">
+                                    <div>
+                                        <h3>${user?.name || 'Unknown User'}</h3>
+                                        <p>${user?.phone || 'No phone number'}</p>
+                                    </div>
+                                </div>
+                                <div class="request-actions">
+                                    ${ride.status === 'pending' ? `
+                                        <button class="btn btn-primary" onclick="acceptRide('${ride.id}')">
+                                            Accept Ride
+                                        </button>
+                                        <button class="btn btn-outline" onclick="rejectRide('${ride.id}')">
+                                            Reject
+                                        </button>
+                                    ` : `
+                                        <button class="btn btn-primary" onclick="startRide('${ride.id}')">
+                                            Start Ride
+                                        </button>
+                                        <button class="btn btn-outline" onclick="cancelRide('${ride.id}')">
+                                            Cancel
+                                        </button>
+                                    `}
+                                </div>
+                            </div>
+                            <div class="request-details">
+                                <div class="detail-item">
+                                    <i class="fas fa-clock"></i>
+                                    <span>${new Date(ride.createdAt).toLocaleString()}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    <span>
+                                        <a href="#" onclick="viewLocation('${ride.id}')">View pickup location</a>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            // Ride action handlers
+            window.acceptRide = async function(rideId) {
+                try {
+                    const rides = NepDrive.StorageManager.getItem('rides') || [];
+                    const rideIndex = rides.findIndex(r => r.id === rideId);
+                    
+                    if (rideIndex === -1) throw new Error('Ride not found');
+
+                    rides[rideIndex].status = 'accepted';
+                    rides[rideIndex].acceptedAt = new Date().toISOString();
+
+                    NepDrive.StorageManager.setItem('rides', rides);
+                    NepDrive.NotificationSystem.show('Ride accepted successfully!', 'info');
+                    loadRideRequests();
+                } catch (error) {
+                    NepDrive.NotificationSystem.show(error.message, 'error');
+                }
+            };
+
+            window.rejectRide = async function(rideId) {
+                try {
+                    const rides = NepDrive.StorageManager.getItem('rides') || [];
+                    const rideIndex = rides.findIndex(r => r.id === rideId);
+                    
+                    if (rideIndex === -1) throw new Error('Ride not found');
+
+                    rides[rideIndex].status = 'rejected';
+                    rides[rideIndex].rejectedAt = new Date().toISOString();
+
+                    NepDrive.StorageManager.setItem('rides', rides);
+                    NepDrive.NotificationSystem.show('Ride rejected', 'info');
+                    loadRideRequests();
+                } catch (error) {
+                    NepDrive.NotificationSystem.show(error.message, 'error');
+                }
+            };
+
+            window.startRide = async function(rideId) {
+                try {
+                    const locationLink = await NepDrive.MapsManager.startRideTracking(rideId);
+                    window.open(locationLink, '_blank');
+                } catch (error) {
+                    NepDrive.NotificationSystem.show(error.message, 'error');
+                }
+            };
+
+            window.cancelRide = async function(rideId) {
+                try {
+                    const rides = NepDrive.StorageManager.getItem('rides') || [];
+                    const rideIndex = rides.findIndex(r => r.id === rideId);
+                    
+                    if (rideIndex === -1) throw new Error('Ride not found');
+
+                    rides[rideIndex].status = 'cancelled';
+                    rides[rideIndex].cancelledAt = new Date().toISOString();
+
+                    NepDrive.StorageManager.setItem('rides', rides);
+                    NepDrive.NotificationSystem.show('Ride cancelled', 'info');
+                    loadRideRequests();
+                } catch (error) {
+                    NepDrive.NotificationSystem.show(error.message, 'error');
+                }
+            };
+
+            window.viewLocation = async function(rideId) {
+                try {
+                    const rides = NepDrive.StorageManager.getItem('rides') || [];
+                    const ride = rides.find(r => r.id === rideId);
+                    
+                    if (!ride) throw new Error('Ride not found');
+
+                    const users = NepDrive.StorageManager.getItem('users') || [];
+                    const user = users.find(u => u.id === ride.userId);
+
+                    if (!user || !user.currentLocation) {
+                        throw new Error('User location not available');
+                    }
+
+                    const locationLink = NepDrive.MapsManager.generateLocationLink(
+                        user.currentLocation.latitude,
+                        user.currentLocation.longitude
+                    );
+
+                    window.open(locationLink, '_blank');
+                } catch (error) {
+                    NepDrive.NotificationSystem.show(error.message, 'error');
+                }
+            };
+
+            // Update earnings
+            function updateEarnings() {
+                const rides = NepDrive.StorageManager.getItem('rides') || [];
+                const completedRides = rides.filter(ride => 
+                    ride.driverId === driver.id && 
+                    ride.status === 'completed'
+                );
+
+                const today = new Date().toDateString();
+                const weekStart = new Date();
+                weekStart.setDate(weekStart.getDate() - 7);
+
+                const todayRides = completedRides.filter(ride => 
+                    new Date(ride.completedAt).toDateString() === today
+                );
+
+                const weekRides = completedRides.filter(ride => 
+                    new Date(ride.completedAt) >= weekStart
+                );
+
+                // Update UI (using dummy values for demonstration)
+                document.getElementById('todayEarnings').textContent = `Rs. ${todayRides.length * 500}`;
+                document.getElementById('todayRides').textContent = todayRides.length;
+
+                document.getElementById('weekEarnings').textContent = `Rs. ${weekRides.length * 500}`;
+                document.getElementById('weekRides').textContent = weekRides.length;
+
+                document.getElementById('totalEarnings').textContent = `Rs. ${completedRides.length * 500}`;
+                document.getElementById('totalRides').textContent = completedRides.length;
+            }
+
+            // Initial load
+            loadRideRequests();
+            updateEarnings();
+
+            // Periodic updates
+            setInterval(() => {
+                loadRideRequests();
+                updateEarnings();
+            }, 10000);
+        });
+    </script>
+</body>
+</html> 

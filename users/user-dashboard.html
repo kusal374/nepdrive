@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - NepDrive</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .dashboard {
+            min-height: 100vh;
+            background-color: var(--gray-light);
+        }
+
+        .dashboard-header {
+            background-color: var(--primary-color);
+            color: var(--white);
+            padding: 1rem 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .dashboard-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .dashboard-content {
+            padding: 2rem 0;
+        }
+
+        .booking-section {
+            background: var(--white);
+            border-radius: 10px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .nearby-drivers {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .driver-card {
+            background: var(--white);
+            border-radius: 10px;
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .driver-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .driver-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .driver-info {
+            flex: 1;
+        }
+
+        .driver-name {
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+
+        .driver-details {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        .ride-history {
+            margin-top: 2rem;
+        }
+
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .history-table th,
+        .history-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--gray-light);
+        }
+
+        .history-table th {
+            background-color: var(--primary-color);
+            color: var(--white);
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .status-completed {
+            background-color: #00C851;
+            color: white;
+        }
+
+        .status-ongoing {
+            background-color: #33b5e5;
+            color: white;
+        }
+
+        .status-cancelled {
+            background-color: #ff4444;
+            color: white;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .history-table {
+                display: block;
+                overflow-x: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <header class="dashboard-header">
+            <div class="container">
+                <nav class="dashboard-nav">
+                    <div class="user-info">
+                        <img id="userAvatar" src="../assets/images/default-avatar.png" alt="User Avatar" class="user-avatar">
+                        <div>
+                            <h2 id="userName">Loading...</h2>
+                            <span id="userEmail">Loading...</span>
+                        </div>
+                    </div>
+                    <button id="logoutBtn" class="btn btn-outline">Logout</button>
+                </nav>
+            </div>
+        </header>
+
+        <main class="dashboard-content">
+            <div class="container">
+                <section class="booking-section">
+                    <h2>Book a Ride</h2>
+                    <p>Find and book nearby drivers</p>
+
+                    <div id="locationStatus" class="mt-2">
+                        <button id="enableLocation" class="btn btn-primary">
+                            <i class="fas fa-location-arrow"></i> Enable Location
+                        </button>
+                    </div>
+
+                    <div id="nearbyDriversSection" class="nearby-drivers">
+                        <div class="loading" id="loadingDrivers">
+                            <i class="fas fa-spinner fa-spin"></i> Finding nearby drivers...
+                        </div>
+                    </div>
+                </section>
+
+                <section class="ride-history">
+                    <h2>Ride History</h2>
+                    <table class="history-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Driver</th>
+                                <th>Vehicle</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rideHistory">
+                            <!-- Ride history will be populated here -->
+                        </tbody>
+                    </table>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <script src="../assets/js/main.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/maps.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Check authentication
+            const session = NepDrive.SessionManager.getSession();
+            if (!session || session.userType !== 'user') {
+                window.location.href = 'user-login.html';
+                return;
+            }
+
+            // Load user data
+            const user = NepDrive.AuthManager.getCurrentUser();
+            if (user) {
+                document.getElementById('userName').textContent = user.name;
+                document.getElementById('userEmail').textContent = user.email;
+                if (user.profilePhoto) {
+                    document.getElementById('userAvatar').src = user.profilePhoto;
+                }
+            }
+
+            // Logout handler
+            document.getElementById('logoutBtn').addEventListener('click', function() {
+                NepDrive.AuthManager.logout();
+                window.location.href = 'user-login.html';
+            });
+
+            // Enable location handler
+            document.getElementById('enableLocation').addEventListener('click', async function() {
+                try {
+                    document.getElementById('loadingDrivers').classList.add('active');
+                    await loadNearbyDrivers();
+                    document.getElementById('locationStatus').style.display = 'none';
+                } catch (error) {
+                    NepDrive.NotificationSystem.show(error.message, 'error');
+                } finally {
+                    document.getElementById('loadingDrivers').classList.remove('active');
+                }
+            });
+
+            // Load nearby drivers
+            async function loadNearbyDrivers() {
+                const drivers = await NepDrive.MapsManager.getNearbyDrivers();
+                const container = document.getElementById('nearbyDriversSection');
+                
+                if (drivers.length === 0) {
+                    container.innerHTML = '<p>No drivers available nearby. Please try again later.</p>';
+                    return;
+                }
+
+                container.innerHTML = drivers.map(driver => `
+                    <div class="driver-card" onclick="bookDriver('${driver.id}')">
+                        <img src="${driver.profilePhoto || '../assets/images/default-avatar.png'}" alt="${driver.name}" class="driver-avatar">
+                        <div class="driver-info">
+                            <h3 class="driver-name">${driver.name}</h3>
+                            <div class="driver-details">
+                                <p>${driver.vehicleType} • ${driver.distance.toFixed(1)} km away</p>
+                                <p>${driver.phone}</p>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            // Book driver
+            window.bookDriver = async function(driverId) {
+                try {
+                    const drivers = NepDrive.StorageManager.getItem('drivers') || [];
+                    const driver = drivers.find(d => d.id === driverId);
+                    
+                    if (!driver) throw new Error('Driver not found');
+
+                    // Create ride record
+                    const rides = NepDrive.StorageManager.getItem('rides') || [];
+                    const ride = {
+                        id: 'ride_' + Date.now(),
+                        userId: user.id,
+                        driverId: driver.id,
+                        status: 'pending',
+                        createdAt: new Date().toISOString()
+                    };
+
+                    rides.push(ride);
+                    NepDrive.StorageManager.setItem('rides', rides);
+
+                    // Get driver's location link
+                    const locationLink = NepDrive.MapsManager.generateLocationLink(
+                        driver.currentLocation.latitude,
+                        driver.currentLocation.longitude
+                    );
+
+                    // Open location in new tab
+                    window.open(locationLink, '_blank');
+
+                    NepDrive.NotificationSystem.show('Ride request sent to driver!', 'info');
+                    loadRideHistory(); // Refresh ride history
+                } catch (error) {
+                    NepDrive.NotificationSystem.show(error.message, 'error');
+                }
+            };
+
+            // Load ride history
+            function loadRideHistory() {
+                const rides = NepDrive.StorageManager.getItem('rides') || [];
+                const drivers = NepDrive.StorageManager.getItem('drivers') || [];
+                const userRides = rides.filter(ride => ride.userId === user.id);
+
+                const tbody = document.getElementById('rideHistory');
+                tbody.innerHTML = userRides.map(ride => {
+                    const driver = drivers.find(d => d.id === ride.driverId);
+                    return `
+                        <tr>
+                            <td>${new Date(ride.createdAt).toLocaleString()}</td>
+                            <td>${driver ? driver.name : 'Unknown'}</td>
+                            <td>${driver ? driver.vehicleType : 'N/A'}</td>
+                            <td>
+                                <span class="status-badge status-${ride.status}">
+                                    ${ride.status.charAt(0).toUpperCase() + ride.status.slice(1)}
+                                </span>
+                            </td>
+                            <td>
+                                ${ride.status === 'ongoing' ? `
+                                    <button class="btn btn-primary" onclick="trackRide('${ride.id}')">
+                                        Track
+                                    </button>
+                                ` : ''}
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
+            // Track ride
+            window.trackRide = async function(rideId) {
+                try {
+                    const rides = NepDrive.StorageManager.getItem('rides') || [];
+                    const ride = rides.find(r => r.id === rideId);
+                    
+                    if (!ride) throw new Error('Ride not found');
+
+                    const drivers = NepDrive.StorageManager.getItem('drivers') || [];
+                    const driver = drivers.find(d => d.id === ride.driverId);
+
+                    if (!driver || !driver.currentLocation) {
+                        throw new Error('Driver location not available');
+                    }
+
+                    const locationLink = NepDrive.MapsManager.generateLocationLink(
+                        driver.currentLocation.latitude,
+                        driver.currentLocation.longitude
+                    );
+
+                    window.open(locationLink, '_blank');
+                } catch (error) {
+                    NepDrive.NotificationSystem.show(error.message, 'error');
+                }
+            };
+
+            // Initial load
+            loadRideHistory();
+        });
+    </script>
+</body>
+</html> 

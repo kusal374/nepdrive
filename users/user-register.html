@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - NepDrive</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .register-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+        }
+
+        .register-card {
+            background: var(--white);
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .register-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .register-header h1 {
+            color: var(--primary-color);
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .register-form {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .profile-upload {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .profile-upload .preview {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: var(--gray-light);
+            margin: 0 auto 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .profile-upload .preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .profile-upload input[type="file"] {
+            display: none;
+        }
+
+        .profile-upload label {
+            cursor: pointer;
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+
+        .login-link {
+            text-align: center;
+            margin-top: 1rem;
+        }
+
+        .login-link a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="register-container">
+        <div class="register-card">
+            <div class="register-header">
+                <h1>Create Account</h1>
+                <p>Join NepDrive as a passenger</p>
+            </div>
+
+            <form id="registerForm" class="register-form">
+                <div class="profile-upload">
+                    <div class="preview">
+                        <img id="profilePreview" src="../assets/images/default-avatar.png" alt="Profile Preview">
+                    </div>
+                    <label for="profilePhoto">
+                        <i class="fas fa-camera"></i> Upload Profile Photo
+                    </label>
+                    <input type="file" id="profilePhoto" accept="image/*">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="fullName">Full Name</label>
+                    <input type="text" id="fullName" class="form-input" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="email">Email Address</label>
+                    <input type="email" id="email" class="form-input" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="phone">Phone Number</label>
+                    <input type="tel" id="phone" class="form-input" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="password">Password</label>
+                    <input type="password" id="password" class="form-input" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="confirmPassword">Confirm Password</label>
+                    <input type="password" id="confirmPassword" class="form-input" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Create Account</button>
+
+                <div class="login-link">
+                    Already have an account? <a href="user-login.html">Login here</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="../assets/js/main.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Profile photo preview
+            const profilePhoto = document.getElementById('profilePhoto');
+            const profilePreview = document.getElementById('profilePreview');
+
+            profilePhoto.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        profilePreview.src = e.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            // Form submission
+            const registerForm = document.getElementById('registerForm');
+            registerForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+
+                // Clear previous errors
+                document.querySelectorAll('.error-message').forEach(error => error.remove());
+
+                // Get form values
+                const fullName = document.getElementById('fullName').value;
+                const email = document.getElementById('email').value;
+                const phone = document.getElementById('phone').value;
+                const password = document.getElementById('password').value;
+                const confirmPassword = document.getElementById('confirmPassword').value;
+                const profilePhotoFile = profilePhoto.files[0];
+
+                // Validate form
+                let isValid = true;
+
+                if (!NepDrive.FormValidator.validateEmail(email)) {
+                    NepDrive.FormValidator.showError('email', 'Please enter a valid email address');
+                    isValid = false;
+                }
+
+                if (!NepDrive.FormValidator.validatePhone(phone)) {
+                    NepDrive.FormValidator.showError('phone', 'Please enter a valid 10-digit phone number');
+                    isValid = false;
+                }
+
+                if (!NepDrive.FormValidator.validatePassword(password)) {
+                    NepDrive.FormValidator.showError('password', 'Password must be at least 8 characters long');
+                    isValid = false;
+                }
+
+                if (password !== confirmPassword) {
+                    NepDrive.FormValidator.showError('confirmPassword', 'Passwords do not match');
+                    isValid = false;
+                }
+
+                if (!isValid) return;
+
+                try {
+                    // Convert profile photo to base64
+                    let profilePhotoBase64 = null;
+                    if (profilePhotoFile) {
+                        profilePhotoBase64 = await new Promise((resolve) => {
+                            const reader = new FileReader();
+                            reader.onload = e => resolve(e.target.result);
+                            reader.readAsDataURL(profilePhotoFile);
+                        });
+                    }
+
+                    // Register user
+                    await NepDrive.AuthManager.registerUser({
+                        name: fullName,
+                        email: email,
+                        phone: phone,
+                        password: password,
+                        profilePhoto: profilePhotoBase64
+                    });
+
+                    NepDrive.NotificationSystem.show('Registration successful! Please login.', 'info');
+                    setTimeout(() => {
+                        window.location.href = 'user-login.html';
+                    }, 1500);
+                } catch (error) {
+                    NepDrive.NotificationSystem.show(error.message, 'error');
+                }
+            });
+        });
+    </script>
+</body>
+</html> 
